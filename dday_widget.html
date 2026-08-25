@@ -1,296 +1,401 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>D-Day</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flipdown@0.3.2/dist/flipdown.min.css">
-<script src="https://cdn.jsdelivr.net/npm/flipdown@0.3.2/src/flipdown.min.js"></script>
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>D-Day</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
-  :root{
-    --ink:#1c2029;
-    --ink-2:#262b38;
-    --paper:#f4eee1;
-    --paper-2:#e9e0cc;
-    --brass:#b98a4a;
-    --brass-soft:#d8b478;
-    --line:rgba(244,238,225,0.14);
-    --shadow: 0 18px 40px rgba(0,0,0,0.35);
-  }
+        :root{
+            --brass:#b98a4a;
+            --brass-soft:#d8b478;
+            --shadow-dark: 0 18px 40px rgba(0,0,0,0.35);
+            --shadow-light: 0 14px 32px rgba(60,50,30,0.16);
+        }
 
-  /* ---- FlipDown 커스텀 테마 (brass / ivory, 탁구 스코어보드 느낌) ----
-     실제 라이브러리 소스 클래스명 기준: rotor, rotor-top, rotor-bottom,
-     rotor-leaf-front, rotor-leaf-rear, rotor-group-heading, rotor-group:nth-child(2/3) */
+        html[data-theme="dark"]{
+            --bg-1:#1c2029;
+            --bg-2:#262b38;
+            --text-on-bg:#f4eee1;
+            --surface:#f4eee1;
+            --surface-2:#e9e0cc;
+            --surface-text:#1c2029;
+            --overlay:rgba(244,238,225,0.08);
+            --overlay-hover:rgba(244,238,225,0.16);
+            --border-line:rgba(244,238,225,0.16);
+            --shadow: var(--shadow-dark);
+            --muted:#9a9078;
+            --card-front-bg:#f6efdd;
+            --card-front-text:#20242e;
+            --card-back-bg:#e7dcc0;
+            --card-back-text:#39404f;
+        }
+        html[data-theme="light"]{
+            --bg-1:#f7f2e6;
+            --bg-2:#ece1c6;
+            --text-on-bg:#22262f;
+            --surface:#ffffff;
+            --surface-2:#f1e9d8;
+            --surface-text:#22262f;
+            --overlay:rgba(28,32,41,0.05);
+            --overlay-hover:rgba(28,32,41,0.09);
+            --border-line:rgba(28,32,41,0.12);
+            --shadow: var(--shadow-light);
+            --muted:#7d7561;
+            --card-front-bg:#ffffff;
+            --card-front-text:#20242e;
+            --card-back-bg:#efe6d2;
+            --card-back-text:#39404f;
+        }
 
-  .flipdown-wrap{
-    display:flex;
-    justify-content:center;
-    width:100%;
-    height:143px;      /* 110px * 1.3 — transform으로 커진 실제 시각 크기만큼 공간을 미리 확보해둠 */
-    overflow:visible;
-    margin:0 auto;
-  }
-  .flipdown-wrap .flipdown{
-    transform:scale(1.3);
-    transform-origin: top center;
-  }
+        *{box-sizing:border-box;}
 
-  .flipdown.flipdown__theme-dark{
-    font-family:'JetBrains Mono', monospace;
-    font-weight:700;
-  }
+        html,body{
+            margin:0;
+            padding:0;
+            width:100%;
+            height:100%;
+            background:transparent;
+            font-family:'Noto Serif KR', serif;
+            color:var(--text-on-bg);
+            -webkit-font-smoothing:antialiased;
+        }
 
-  /* 헤딩(일/시간/분/초) 텍스트 */
-  .flipdown.flipdown__theme-dark .rotor-group-heading::before{
-    color:#a9a08a;
-    font-family:'JetBrains Mono', monospace;
-    font-size:11px;
-    letter-spacing:0.14em;
-    text-transform:uppercase;
-  }
+        #app{
+            width:100%;
+            min-height:100vh;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            background:
+                    radial-gradient(1200px 600px at 20% -10%, rgba(184,138,74,0.12), transparent 60%),
+                    linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 100%);
+            padding:28px 16px;
+            transition: background .25s ease;
+        }
 
-  /* 카드 앞면 (위쪽 절반) */
-  .flipdown.flipdown__theme-dark .rotor,
-  .flipdown.flipdown__theme-dark .rotor-top,
-  .flipdown.flipdown__theme-dark .rotor-leaf-front{
-    color:#20242e;
-    background-color:#f6efdd;
-  }
-  /* 카드 뒷면 (아래쪛 절반) — 살짝 톤 다운으로 입체감 */
-  .flipdown.flipdown__theme-dark .rotor-bottom,
-  .flipdown.flipdown__theme-dark .rotor-leaf-rear{
-    color:#39404f;
-    background-color:#e7dcc0;
-  }
-  /* 카드 중앙 접히는 선 */
-  .flipdown.flipdown__theme-dark .rotor:after{
-    border-top:solid 1px rgba(28,32,41,0.18);
-  }
-  /* 그룹 사이 콜론(:) 구분점 — 브라스 색 */
-  .flipdown.flipdown__theme-dark .rotor-group:nth-child(n+2):nth-child(-n+3)::before,
-  .flipdown.flipdown__theme-dark .rotor-group:nth-child(n+2):nth-child(-n+3)::after{
-    background-color:#d8b478;
-  }
+        /* ---------- SETUP VIEW ---------- */
+        .setup-card{
+            width:100%;
+            max-width:380px;
+            background:var(--surface);
+            color:var(--surface-text);
+            border-radius:18px;
+            padding:32px 28px 28px;
+            box-shadow:var(--shadow);
+            position:relative;
+            overflow:hidden;
+        }
+        .setup-card::before{
+            content:"";
+            position:absolute;
+            top:0;left:0;right:0;
+            height:6px;
+            background:linear-gradient(90deg,var(--brass),var(--brass-soft));
+        }
+        .setup-eyebrow{
+            font-family:'JetBrains Mono', monospace;
+            font-size:11px;
+            letter-spacing:0.18em;
+            color:var(--brass);
+            text-transform:uppercase;
+            margin-bottom:8px;
+        }
+        .setup-title{
+            font-size:22px;
+            font-weight:700;
+            margin:0 0 22px;
+            line-height:1.35;
+        }
+        .field{ margin-bottom:16px; }
+        .field label{
+            display:block;
+            font-size:12px;
+            color:var(--muted);
+            margin-bottom:6px;
+            letter-spacing:0.02em;
+        }
+        .field input{
+            width:100%;
+            padding:11px 12px;
+            border-radius:9px;
+            border:1.5px solid var(--surface-2);
+            background:var(--surface);
+            font-family:'Noto Serif KR', serif;
+            font-size:14px;
+            color:var(--surface-text);
+            outline:none;
+            transition:border-color .15s ease;
+        }
+        .field input:focus{ border-color:var(--brass); }
+        .row2{ display:flex; gap:10px; }
+        .row2 .field{ flex:1; }
 
-  /* 구조적 스타일 — 라운드 코너 + 그림자로 종이 질감 강조 */
-  .flipdown .rotor{
-    border-radius:8px;
-    box-shadow:0 10px 24px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.35);
-  }
-  .flipdown .rotor-top{
-    border-radius:8px 8px 0 0;
-  }
-  .flipdown .rotor-bottom{
-    border-radius:0 0 8px 8px;
-  }
+        .make-btn{
+            width:100%;
+            margin-top:6px;
+            padding:13px 0;
+            border:none;
+            border-radius:9px;
+            background:#1c2029;
+            color:#f4eee1;
+            font-family:'Noto Serif KR', serif;
+            font-size:14.5px;
+            font-weight:600;
+            letter-spacing:0.02em;
+            cursor:pointer;
+            transition:transform .12s ease, background .15s ease;
+        }
+        .make-btn:hover{ background:#000; }
+        .make-btn:active{ transform:scale(0.98); }
 
-  @media (max-width:480px){
-    .flipdown-wrap{ height:110px; }
-    .flipdown-wrap .flipdown{ transform:scale(1); }
-  }
+        .setup-hint{
+            margin-top:14px;
+            font-size:11.5px;
+            color:var(--muted);
+            line-height:1.5;
+        }
 
-  *{box-sizing:border-box;}
+        /* ---------- COUNTDOWN VIEW ---------- */
+        .board{
+            width:100%;
+            max-width:760px;
+            text-align:center;
+        }
+        .board-title{
+            font-size:22px;
+            font-weight:600;
+            color:var(--text-on-bg);
+            margin:0 0 14px;
+            line-height:1.4;
+            word-break:keep-word;
+        }
 
-  html,body{
-    margin:0;
-    padding:0;
-    width:100%;
-    height:100%;
-    background:transparent;
-    font-family:'Noto Serif KR', serif;
-    color:var(--paper);
-    -webkit-font-smoothing:antialiased;
-  }
+        .dday-tag{
+            display:inline-flex;
+            align-items:center;
+            gap:6px;
+            font-family:'JetBrains Mono', monospace;
+            font-size:13px;
+            letter-spacing:0.08em;
+            color:var(--brass-soft);
+            background:transparent;
+            border:1px solid rgba(216,180,120,0.4);
+            border-radius:100px;
+            padding:5px 14px;
+            margin-bottom:28px;
+            cursor:pointer;
+            transition:background .15s ease, border-color .15s ease;
+        }
+        .dday-tag:hover{
+            background:rgba(216,180,120,0.12);
+            border-color:rgba(216,180,120,0.7);
+        }
+        .dday-tag::after{ content:"⚙"; font-size:11px; opacity:0.7; }
 
-  #app{
-    width:100%;
-    min-height:100vh;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    background:
-      radial-gradient(1200px 600px at 20% -10%, rgba(184,138,74,0.12), transparent 60%),
-      linear-gradient(180deg, var(--ink) 0%, var(--ink-2) 100%);
-    padding:28px 16px;
-  }
+        /* ---------- 커스텀 플립 클락 (FlipDown과 같은 3D 회전 기법을 직접 구현) ---------- */
+        .fc{
+            display:flex;
+            justify-content:center;
+            align-items:flex-start;
+            gap:18px;
+            flex-wrap:wrap;
+        }
+        .fc-group{
+            display:flex;
+            flex-direction:column;
+            align-items:center;
+        }
+        .fc-group-label{
+            font-family:'JetBrains Mono', monospace;
+            font-size:11px;
+            letter-spacing:0.14em;
+            text-transform:uppercase;
+            color:var(--muted);
+            margin-bottom:8px;
+        }
+        .fc-rotors{ display:flex; gap:4px; }
+        .fc-rotor{
+            position:relative;
+            width:44px;
+            height:64px;
+            perspective:280px;
+        }
+        .fc-face{
+            position:absolute;
+            inset:0;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            border-radius:8px;
+            font-family:'JetBrains Mono', monospace;
+            font-size:1.9rem;
+            font-weight:700;
+            backface-visibility:hidden;
+            -webkit-backface-visibility:hidden;
+            box-shadow:0 8px 18px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.35);
+        }
+        .fc-face-current{
+            background:var(--card-front-bg);
+            color:var(--card-front-text);
+            transform:rotateX(0deg);
+        }
+        .fc-face-next{
+            background:var(--card-front-bg);
+            color:var(--card-front-text);
+            transform:rotateX(180deg);
+        }
+        .fc-rotor.flipping .fc-face-current{
+            transition:transform .45s ease-in-out;
+            transform:rotateX(-180deg);
+        }
+        .fc-rotor.flipping .fc-face-next{
+            transition:transform .45s ease-in-out;
+            transform:rotateX(0deg);
+        }
+        .fc-rotor::after{
+            content:"";
+            position:absolute;
+            left:4px; right:4px; top:50%;
+            height:1px;
+            background:rgba(0,0,0,0.16);
+            z-index:3;
+            pointer-events:none;
+        }
 
-  /* ---------- SETUP VIEW ---------- */
-  .setup-card{
-    width:100%;
-    max-width:380px;
-    background:var(--paper);
-    color:var(--ink);
-    border-radius:18px;
-    padding:32px 28px 28px;
-    box-shadow:var(--shadow);
-    position:relative;
-    overflow:hidden;
-  }
-  .setup-card::before{
-    content:"";
-    position:absolute;
-    top:0;left:0;right:0;
-    height:6px;
-    background:linear-gradient(90deg,var(--brass),var(--brass-soft));
-  }
-  .setup-eyebrow{
-    font-family:'JetBrains Mono', monospace;
-    font-size:11px;
-    letter-spacing:0.18em;
-    color:var(--brass);
-    text-transform:uppercase;
-    margin-bottom:8px;
-  }
-  .setup-title{
-    font-size:22px;
-    font-weight:700;
-    margin:0 0 22px;
-    line-height:1.35;
-  }
-  .field{
-    margin-bottom:16px;
-  }
-  .field label{
-    display:block;
-    font-size:12px;
-    color:#6b6250;
-    margin-bottom:6px;
-    letter-spacing:0.02em;
-  }
-  .field input{
-    width:100%;
-    padding:11px 12px;
-    border-radius:9px;
-    border:1.5px solid var(--paper-2);
-    background:#fffdf8;
-    font-family:'Noto Serif KR', serif;
-    font-size:14px;
-    color:var(--ink);
-    outline:none;
-    transition:border-color .15s ease;
-  }
-  .field input:focus{
-    border-color:var(--brass);
-  }
-  .row2{
-    display:flex;
-    gap:10px;
-  }
-  .row2 .field{flex:1;}
+        @media (max-width:520px){
+            .fc{ gap:10px; }
+            .fc-rotor{ width:34px; height:50px; }
+            .fc-face{ font-size:1.4rem; border-radius:6px; }
+        }
 
-  .make-btn{
-    width:100%;
-    margin-top:6px;
-    padding:13px 0;
-    border:none;
-    border-radius:9px;
-    background:var(--ink);
-    color:var(--paper);
-    font-family:'Noto Serif KR', serif;
-    font-size:14.5px;
-    font-weight:600;
-    letter-spacing:0.02em;
-    cursor:pointer;
-    transition:transform .12s ease, background .15s ease;
-  }
-  .make-btn:hover{ background:#000; }
-  .make-btn:active{ transform:scale(0.98); }
+        /* ---------- 팝업 (테마 / 링크 복사 / 다시 설정) ---------- */
+        .popup-overlay{
+            position:fixed;
+            inset:0;
+            background:rgba(0,0,0,0.45);
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            z-index:100;
+            padding:20px;
+        }
+        .popup-card{
+            width:100%;
+            max-width:320px;
+            background:var(--surface);
+            color:var(--surface-text);
+            border-radius:16px;
+            padding:22px 20px 18px;
+            box-shadow:var(--shadow);
+            text-align:center;
+        }
+        .popup-title{
+            font-size:12px;
+            letter-spacing:0.06em;
+            color:var(--muted);
+            margin:0 0 10px;
+            font-family:'JetBrains Mono', monospace;
+            text-transform:uppercase;
+            text-align:left;
+        }
+        .theme-seg{
+            display:flex;
+            gap:6px;
+            margin-bottom:18px;
+        }
+        .seg-btn{
+            flex:1;
+            padding:9px 0;
+            font-size:12px;
+            border-radius:8px;
+            border:1px solid var(--border-line);
+            background:var(--overlay);
+            color:var(--surface-text);
+            cursor:pointer;
+            font-family:'JetBrains Mono', monospace;
+            transition:background .15s ease;
+        }
+        .seg-btn:hover{ background:var(--overlay-hover); }
+        .seg-btn.active{
+            background:var(--brass);
+            color:#1c2029;
+            border-color:var(--brass);
+            font-weight:700;
+        }
+        .popup-divider{
+            height:1px;
+            background:var(--border-line);
+            margin:0 0 16px;
+        }
+        .popup-btn{
+            display:block;
+            width:100%;
+            text-align:center;
+            font-family:'Noto Serif KR', serif;
+            font-size:14px;
+            color:var(--surface-text);
+            background:var(--overlay);
+            border:1px solid var(--border-line);
+            border-radius:10px;
+            padding:12px 0;
+            margin-bottom:10px;
+            cursor:pointer;
+            transition:background .15s ease;
+        }
+        .popup-btn:hover{ background:var(--overlay-hover); }
+        .popup-btn.copied{
+            background:var(--brass);
+            color:#1c2029;
+            border-color:var(--brass);
+        }
+        .popup-close{
+            margin-top:4px;
+            font-size:12px;
+            color:var(--muted);
+            background:none;
+            border:none;
+            cursor:pointer;
+            text-decoration:underline;
+        }
 
-  .setup-hint{
-    margin-top:14px;
-    font-size:11.5px;
-    color:#8a8069;
-    line-height:1.5;
-  }
-
-  /* ---------- COUNTDOWN VIEW ---------- */
-  .board{
-    width:100%;
-    max-width:700px;
-    text-align:center;
-  }
-  .board-eyebrow{
-    font-family:'JetBrains Mono', monospace;
-    font-size:11px;
-    letter-spacing:0.22em;
-    text-transform:uppercase;
-    color:var(--brass-soft);
-    margin-bottom:10px;
-  }
-  .board-title{
-    font-size:21px;
-    font-weight:600;
-    color:var(--paper);
-    margin:0 0 26px;
-    line-height:1.4;
-    word-break:keep-word;
-  }
-
-  .dday-tag{
-    display:inline-block;
-    font-family:'JetBrains Mono', monospace;
-    font-size:13px;
-    letter-spacing:0.08em;
-    color:var(--brass-soft);
-    border:1px solid rgba(216,180,120,0.4);
-    border-radius:100px;
-    padding:4px 14px;
-    margin-bottom:22px;
-  }
-
-  .tiles-spacer{
-    height:4px;
-  }
-
-  .footer-row{
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    gap:14px;
-    margin-top:26px;
-  }
-  .link-btn{
-    font-family:'JetBrains Mono', monospace;
-    font-size:11.5px;
-    letter-spacing:0.04em;
-    color:var(--paper);
-    background:rgba(244,238,225,0.08);
-    border:1px solid var(--line);
-    border-radius:100px;
-    padding:8px 14px;
-    cursor:pointer;
-    transition:background .15s ease, border-color .15s ease;
-  }
-  .link-btn:hover{
-    background:rgba(244,238,225,0.16);
-    border-color:rgba(244,238,225,0.3);
-  }
-  .link-btn.copied{
-    background:var(--brass);
-    color:#1c2029;
-    border-color:var(--brass);
-  }
-
-  @media (max-width:380px){
-    .board-title{ font-size:18px; }
-  }
-</style>
+        @media (max-width:380px){
+            .board-title{ font-size:18px; }
+        }
+    </style>
 </head>
 <body>
 
 <div id="app"></div>
 
 <script>
-(function(){
-  const app = document.getElementById('app');
-  const params = new URLSearchParams(window.location.search);
+    (function(){
+        const app = document.getElementById('app');
+        const params = new URLSearchParams(window.location.search);
 
-  function pad(n){ return String(n).padStart(2,'0'); }
+        // ---------- 테마 : 'system' | 'light' | 'dark' (기본값 system) ----------
+        const mql = window.matchMedia('(prefers-color-scheme: dark)');
+        let themeMode = 'system';
 
-  function renderSetup(){
-    app.innerHTML = `
+        function effectiveTheme(){
+            return themeMode === 'system' ? (mql.matches ? 'dark' : 'light') : themeMode;
+        }
+        function applyTheme(){
+            document.documentElement.setAttribute('data-theme', effectiveTheme());
+            document.querySelectorAll('.seg-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.mode === themeMode);
+            });
+        }
+        applyTheme();
+        mql.addEventListener('change', () => { if(themeMode === 'system') applyTheme(); });
+
+        // ---------- 상태 ----------
+        let tagIntervalId = null;
+        let fcIntervalId = null;
+
+        function renderSetup(){
+            app.innerHTML = `
       <div class="setup-card">
         <div class="setup-eyebrow">D-DAY WIDGET</div>
         <h1 class="setup-title">날짜를 입력하면<br>디데이 위젯이 만들어져요</h1>
@@ -312,134 +417,251 @@
         <div class="setup-hint">만든 후 나오는 링크를 그대로 복사해서<br>노션 embed 블록에 붙여넣으면 이 화면 대신 카운트다운이 표시돼요.</div>
       </div>
     `;
-    document.getElementById('btn-make').addEventListener('click', () => {
-      const title = document.getElementById('in-title').value.trim() || '디데이';
-      const date = document.getElementById('in-date').value;
-      const time = document.getElementById('in-time').value || '00:00';
-      if(!date){
-        const dateField = document.getElementById('in-date');
-        dateField.style.borderColor = '#c0483f';
-        return;
-      }
-      const iso = `${date}T${time}:00`;
-      const newParams = new URLSearchParams();
-      newParams.set('date', iso);
-      newParams.set('title', title);
-      const shareUrl = buildBaseUrl() + '?' + newParams.toString();
-      renderCountdown(iso, title, shareUrl);
-    });
-  }
+            document.getElementById('btn-make').addEventListener('click', () => {
+                const title = document.getElementById('in-title').value.trim() || '디데이';
+                const date = document.getElementById('in-date').value;
+                const time = document.getElementById('in-time').value || '00:00';
+                if(!date){
+                    document.getElementById('in-date').style.borderColor = '#c0483f';
+                    return;
+                }
+                const iso = `${date}T${time}:00`;
+                const newParams = new URLSearchParams();
+                newParams.set('date', iso);
+                newParams.set('title', title);
+                const shareUrl = buildBaseUrl() + '?' + newParams.toString();
+                renderCountdown(iso, title, shareUrl);
+            });
+        }
 
-  function buildBaseUrl(){
-    // srcdoc / sandboxed previews don't have a usable origin+pathname,
-    // fall back to a placeholder the user can replace with their published link.
-    try{
-      if(window.location.origin && window.location.origin !== 'null' && window.location.protocol !== 'about:'){
-        return window.location.origin + window.location.pathname;
-      }
-    }catch(e){}
-    return '(퍼블리시된 링크)';
-  }
+        function buildBaseUrl(){
+            try{
+                if(window.location.origin && window.location.origin !== 'null' && window.location.protocol !== 'about:'){
+                    return window.location.origin + window.location.pathname;
+                }
+            }catch(e){}
+            return '(퍼블리시된 링크)';
+        }
 
-  function renderCountdown(isoDate, title, shareUrlOverride){
-    const target = new Date(isoDate);
-    const shareUrl = shareUrlOverride || window.location.href;
+        function openOptionsPopup(shareUrl){
+            const overlay = document.createElement('div');
+            overlay.className = 'popup-overlay';
+            overlay.innerHTML = `
+      <div class="popup-card">
+        <div class="popup-title">테마</div>
+        <div class="theme-seg">
+          <button class="seg-btn" data-mode="system">시스템</button>
+          <button class="seg-btn" data-mode="light">라이트</button>
+          <button class="seg-btn" data-mode="dark">다크</button>
+        </div>
+        <div class="popup-divider"></div>
+        <button class="popup-btn" id="popup-copy">🔗 링크 복사 (Notion embed용)</button>
+        <button class="popup-btn" id="popup-reset">↺ 다시 설정</button>
+        <button class="popup-close" id="popup-close">닫기</button>
+      </div>
+    `;
+            document.body.appendChild(overlay);
+            applyTheme(); // 활성 버튼 표시 동기화
 
-    app.innerHTML = `
+            overlay.querySelectorAll('.seg-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    themeMode = btn.dataset.mode;
+                    applyTheme();
+                });
+            });
+
+            function closePopup(){ overlay.remove(); }
+            overlay.addEventListener('click', (e) => { if(e.target === overlay) closePopup(); });
+            document.getElementById('popup-close').addEventListener('click', closePopup);
+
+            document.getElementById('popup-reset').addEventListener('click', () => {
+                closePopup();
+                renderSetup();
+            });
+
+            document.getElementById('popup-copy').addEventListener('click', (e) => {
+                const btn = e.currentTarget;
+                const doCopyFallback = () => {
+                    const ta = document.createElement('textarea');
+                    ta.value = shareUrl;
+                    ta.style.position = 'fixed';
+                    ta.style.opacity = '0';
+                    document.body.appendChild(ta);
+                    ta.select();
+                    try{ document.execCommand('copy'); }catch(err){}
+                    document.body.removeChild(ta);
+                };
+                if(navigator.clipboard && navigator.clipboard.writeText){
+                    navigator.clipboard.writeText(shareUrl).catch(doCopyFallback);
+                } else {
+                    doCopyFallback();
+                }
+                btn.textContent = '✓ 복사됨';
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.textContent = '🔗 링크 복사 (Notion embed용)';
+                    btn.classList.remove('copied');
+                }, 1400);
+            });
+        }
+
+        // ---------- 달력 기준 연/월/일/시/분/초 분해 ----------
+        function calendarBreakdown(now, target){
+            const future = now <= target;
+            const from = future ? now : target;
+            const to = future ? target : now;
+
+            let y = to.getFullYear() - from.getFullYear();
+            let mo = to.getMonth() - from.getMonth();
+            let d = to.getDate() - from.getDate();
+            let h = to.getHours() - from.getHours();
+            let mi = to.getMinutes() - from.getMinutes();
+            let s = to.getSeconds() - from.getSeconds();
+
+            if(s < 0){ s += 60; mi--; }
+            if(mi < 0){ mi += 60; h--; }
+            if(h < 0){ h += 24; d--; }
+            if(d < 0){
+                const prevMonthLastDay = new Date(to.getFullYear(), to.getMonth(), 0).getDate();
+                d += prevMonthLastDay;
+                mo--;
+            }
+            if(mo < 0){ mo += 12; y--; }
+
+            return { years:y, months:mo, days:d, hours:h, minutes:mi, seconds:s, isFuture: future };
+        }
+
+        function activeGroups(b){
+            const groups = [];
+            if(b.years > 0){
+                groups.push(['년', b.years]);
+                groups.push(['월', b.months]);
+                groups.push(['일', b.days]);
+            } else if(b.months > 0){
+                groups.push(['월', b.months]);
+                groups.push(['일', b.days]);
+            } else if(b.days > 0){
+                groups.push(['일', b.days]);
+            }
+            groups.push(['시간', b.hours]);
+            groups.push(['분', b.minutes]);
+            groups.push(['초', b.seconds]);
+            return groups;
+        }
+
+        // ---------- 플립 클락 렌더 / 갱신 ----------
+        let fcSignature = ''; // 그룹 구성(레이블+자릿수)이 바뀌었는지 감지용
+
+        function buildFlipClock(container, groups){
+            container.innerHTML = groups.map(([label, value]) => {
+                const digits = String(value).padStart(2, '0').split('');
+                const rotors = digits.map(dig => `
+        <div class="fc-rotor" data-value="${dig}">
+          <div class="fc-face fc-face-current">${dig}</div>
+          <div class="fc-face fc-face-next">${dig}</div>
+        </div>
+      `).join('');
+                return `
+        <div class="fc-group">
+          <div class="fc-rotors">${rotors}</div>
+          <div class="fc-group-label">${label}</div>
+        </div>
+      `;
+            }).join('');
+        }
+
+        function updateFlipClock(container, groups){
+            const rotorGroups = container.querySelectorAll('.fc-group');
+            groups.forEach(([label, value], gi) => {
+                const digits = String(value).padStart(2, '0').split('');
+                const groupEl = rotorGroups[gi];
+                if(!groupEl) return;
+                const rotors = groupEl.querySelectorAll('.fc-rotor');
+                digits.forEach((dig, di) => {
+                    const rotorEl = rotors[di];
+                    if(!rotorEl) return;
+                    if(rotorEl.dataset.value === dig) return; // 변화 없음
+                    const next = rotorEl.querySelector('.fc-face-next');
+                    const current = rotorEl.querySelector('.fc-face-current');
+                    next.textContent = dig;
+                    rotorEl.classList.add('flipping');
+                    const onEnd = () => {
+                        current.removeEventListener('transitionend', onEnd);
+                        rotorEl.classList.remove('flipping');
+                        current.textContent = dig;
+                        rotorEl.dataset.value = dig;
+                    };
+                    current.addEventListener('transitionend', onEnd);
+                });
+            });
+        }
+
+        function tickFlipClock(container, target){
+            const b = calendarBreakdown(new Date(), target);
+            const groups = activeGroups(b);
+            const signature = groups.map(g => g[0]).join(',');
+            if(signature !== fcSignature){
+                fcSignature = signature;
+                buildFlipClock(container, groups);
+            } else {
+                updateFlipClock(container, groups);
+            }
+        }
+
+        function renderCountdown(isoDate, title, shareUrlOverride){
+            const target = new Date(isoDate);
+            const shareUrl = shareUrlOverride || window.location.href;
+            fcSignature = '';
+
+            app.innerHTML = `
       <div class="board">
-        <div class="board-eyebrow">D-DAY</div>
         <h1 class="board-title">${escapeHtml(title)}</h1>
-        <div class="dday-tag" id="ddayTag">D-0</div>
-        <div class="flipdown-wrap">
-          <div class="flipdown flipdown__theme-dark" id="flipdownEl"></div>
-        </div>
-        <div class="tiles-spacer"></div>
-        <div class="footer-row">
-          <button class="link-btn" id="btn-copy">🔗 이 링크 복사 (Notion embed용)</button>
-          <button class="link-btn" id="btn-reset">↺ 다시 설정</button>
-        </div>
+        <button class="dday-tag" id="ddayTag">D-0</button>
+        <div class="fc" id="flipClock"></div>
       </div>
     `;
 
-    document.getElementById('btn-reset').addEventListener('click', () => {
-      renderSetup();
-    });
+            document.getElementById('ddayTag').addEventListener('click', () => {
+                openOptionsPopup(shareUrl);
+            });
 
-    document.getElementById('btn-copy').addEventListener('click', (e) => {
-      const btn = e.currentTarget;
-      const doCopyFallback = () => {
-        const ta = document.createElement('textarea');
-        ta.value = shareUrl;
-        ta.style.position = 'fixed';
-        ta.style.opacity = '0';
-        document.body.appendChild(ta);
-        ta.select();
-        try{ document.execCommand('copy'); }catch(err){}
-        document.body.removeChild(ta);
-      };
-      if(navigator.clipboard && navigator.clipboard.writeText){
-        navigator.clipboard.writeText(shareUrl).catch(doCopyFallback);
-      } else {
-        doCopyFallback();
-      }
-      btn.textContent = '✓ 복사됨';
-      btn.classList.add('copied');
-      setTimeout(() => {
-        btn.textContent = '🔗 이 링크 복사 (Notion embed용)';
-        btn.classList.remove('copied');
-      }, 1600);
-    });
+            if(tagIntervalId !== null){ clearInterval(tagIntervalId); tagIntervalId = null; }
+            if(fcIntervalId !== null){ clearInterval(fcIntervalId); fcIntervalId = null; }
 
-    // D-day pill (D-n / D+n / D-DAY) — updated independently of FlipDown's own animation loop
-    function updateTag(){
-      const now = new Date();
-      const diff = target.getTime() - now.getTime();
-      const isFuture = diff >= 0;
-      const days = Math.floor(Math.abs(diff) / 86400000);
-      const tag = document.getElementById('ddayTag');
-      if(!tag) return;
-      if(days === 0 && isFuture){
-        tag.textContent = 'D-DAY';
-      } else if(isFuture){
-        tag.textContent = 'D-' + days;
-      } else {
-        tag.textContent = 'D+' + days;
-      }
-    }
-    updateTag();
-    setInterval(updateTag, 1000);
+            function updateTag(){
+                const now = new Date();
+                const diff = target.getTime() - now.getTime();
+                const isFuture = diff >= 0;
+                const days = Math.floor(Math.abs(diff) / 86400000);
+                const tag = document.getElementById('ddayTag');
+                if(!tag) return;
+                if(days === 0 && isFuture){ tag.textContent = 'D-DAY'; }
+                else if(isFuture){ tag.textContent = 'D-' + days; }
+                else { tag.textContent = 'D+' + days; }
+            }
+            updateTag();
+            tagIntervalId = setInterval(updateTag, 1000);
 
-    // FlipDown countdown — table-tennis scoreboard style flip animation
-    const nowSec = Math.floor(Date.now() / 1000);
-    const targetSec = Math.floor(target.getTime() / 1000);
-    const flipTargetSec = targetSec > nowSec ? targetSec : nowSec; // FlipDown can't count up past a passed date
-    try{
-      new FlipDown(flipTargetSec, 'flipdownEl', {
-        theme: 'dark',
-        headings: ['일', '시간', '분', '초']
-      }).start();
-    }catch(err){
-      // FlipDown failed to load (e.g. CDN blocked) — fall back to a plain text readout
-      document.getElementById('flipdownEl').innerHTML =
-        '<div style="font-family:\'JetBrains Mono\',monospace;color:var(--paper-2);font-size:13px;">카운트다운 애니메이션을 불러오지 못했어요 (네트워크 차단 시 발생)</div>';
-    }
-  }
+            const flipEl = document.getElementById('flipClock');
+            tickFlipClock(flipEl, target);
+            fcIntervalId = setInterval(() => tickFlipClock(flipEl, target), 1000);
+        }
 
-  function escapeHtml(str){
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
-  }
+        function escapeHtml(str){
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
 
-  // entry point
-  const dateParam = params.get('date');
-  const titleParam = params.get('title') || '디데이';
-  if(dateParam){
-    renderCountdown(dateParam, titleParam, window.location.href);
-  } else {
-    renderSetup();
-  }
-})();
+        // entry point
+        const dateParam = params.get('date');
+        const titleParam = params.get('title') || '디데이';
+        if(dateParam){
+            renderCountdown(dateParam, titleParam, window.location.href);
+        } else {
+            renderSetup();
+        }
+    })();
 </script>
 
 </body>
