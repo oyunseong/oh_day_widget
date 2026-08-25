@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>D-Day</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flipdown@0.3.2/dist/flipdown.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flipdown@0.3.2/src/flipdown.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+  :root{
+    --ink:#1c2029;
+    --ink-2:#262b38;
+    --paper:#f4eee1;
+    --paper-2:#e9e0cc;
+    --brass:#b98a4a;
+    --brass-soft:#d8b478;
+    --line:rgba(244,238,225,0.14);
+    --shadow: 0 18px 40px rgba(0,0,0,0.35);
+  }
+
+  /* ---- FlipDown 커스텀 테마 (brass / ivory, 탁구 스코어보드 느낌) ----
+     실제 라이브러리 소스 클래스명 기준: rotor, rotor-top, rotor-bottom,
+     rotor-leaf-front, rotor-leaf-rear, rotor-group-heading, rotor-group:nth-child(2/3) */
+
+  .flipdown-wrap{
+    display:flex;
+    justify-content:center;
+    width:100%;
+    height:143px;      /* 110px * 1.3 — transform으로 커진 실제 시각 크기만큼 공간을 미리 확보해둠 */
+    overflow:visible;
+    margin:0 auto;
+  }
+  .flipdown-wrap .flipdown{
+    transform:scale(1.3);
+    transform-origin: top center;
+  }
+
+  .flipdown.flipdown__theme-dark{
+    font-family:'JetBrains Mono', monospace;
+    font-weight:700;
+  }
+
+  /* 헤딩(일/시간/분/초) 텍스트 */
+  .flipdown.flipdown__theme-dark .rotor-group-heading::before{
+    color:#a9a08a;
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+  }
+
+  /* 카드 앞면 (위쪽 절반) */
+  .flipdown.flipdown__theme-dark .rotor,
+  .flipdown.flipdown__theme-dark .rotor-top,
+  .flipdown.flipdown__theme-dark .rotor-leaf-front{
+    color:#20242e;
+    background-color:#f6efdd;
+  }
+  /* 카드 뒷면 (아래쪛 절반) — 살짝 톤 다운으로 입체감 */
+  .flipdown.flipdown__theme-dark .rotor-bottom,
+  .flipdown.flipdown__theme-dark .rotor-leaf-rear{
+    color:#39404f;
+    background-color:#e7dcc0;
+  }
+  /* 카드 중앙 접히는 선 */
+  .flipdown.flipdown__theme-dark .rotor:after{
+    border-top:solid 1px rgba(28,32,41,0.18);
+  }
+  /* 그룹 사이 콜론(:) 구분점 — 브라스 색 */
+  .flipdown.flipdown__theme-dark .rotor-group:nth-child(n+2):nth-child(-n+3)::before,
+  .flipdown.flipdown__theme-dark .rotor-group:nth-child(n+2):nth-child(-n+3)::after{
+    background-color:#d8b478;
+  }
+
+  /* 구조적 스타일 — 라운드 코너 + 그림자로 종이 질감 강조 */
+  .flipdown .rotor{
+    border-radius:8px;
+    box-shadow:0 10px 24px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.35);
+  }
+  .flipdown .rotor-top{
+    border-radius:8px 8px 0 0;
+  }
+  .flipdown .rotor-bottom{
+    border-radius:0 0 8px 8px;
+  }
+
+  @media (max-width:480px){
+    .flipdown-wrap{ height:110px; }
+    .flipdown-wrap .flipdown{ transform:scale(1); }
+  }
+
+  *{box-sizing:border-box;}
+
+  html,body{
+    margin:0;
+    padding:0;
+    width:100%;
+    height:100%;
+    background:transparent;
+    font-family:'Noto Serif KR', serif;
+    color:var(--paper);
+    -webkit-font-smoothing:antialiased;
+  }
+
+  #app{
+    width:100%;
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:
+      radial-gradient(1200px 600px at 20% -10%, rgba(184,138,74,0.12), transparent 60%),
+      linear-gradient(180deg, var(--ink) 0%, var(--ink-2) 100%);
+    padding:28px 16px;
+  }
+
+  /* ---------- SETUP VIEW ---------- */
+  .setup-card{
+    width:100%;
+    max-width:380px;
+    background:var(--paper);
+    color:var(--ink);
+    border-radius:18px;
+    padding:32px 28px 28px;
+    box-shadow:var(--shadow);
+    position:relative;
+    overflow:hidden;
+  }
+  .setup-card::before{
+    content:"";
+    position:absolute;
+    top:0;left:0;right:0;
+    height:6px;
+    background:linear-gradient(90deg,var(--brass),var(--brass-soft));
+  }
+  .setup-eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.18em;
+    color:var(--brass);
+    text-transform:uppercase;
+    margin-bottom:8px;
+  }
+  .setup-title{
+    font-size:22px;
+    font-weight:700;
+    margin:0 0 22px;
+    line-height:1.35;
+  }
+  .field{
+    margin-bottom:16px;
+  }
+  .field label{
+    display:block;
+    font-size:12px;
+    color:#6b6250;
+    margin-bottom:6px;
+    letter-spacing:0.02em;
+  }
+  .field input{
+    width:100%;
+    padding:11px 12px;
+    border-radius:9px;
+    border:1.5px solid var(--paper-2);
+    background:#fffdf8;
+    font-family:'Noto Serif KR', serif;
+    font-size:14px;
+    color:var(--ink);
+    outline:none;
+    transition:border-color .15s ease;
+  }
+  .field input:focus{
+    border-color:var(--brass);
+  }
+  .row2{
+    display:flex;
+    gap:10px;
+  }
+  .row2 .field{flex:1;}
+
+  .make-btn{
+    width:100%;
+    margin-top:6px;
+    padding:13px 0;
+    border:none;
+    border-radius:9px;
+    background:var(--ink);
+    color:var(--paper);
+    font-family:'Noto Serif KR', serif;
+    font-size:14.5px;
+    font-weight:600;
+    letter-spacing:0.02em;
+    cursor:pointer;
+    transition:transform .12s ease, background .15s ease;
+  }
+  .make-btn:hover{ background:#000; }
+  .make-btn:active{ transform:scale(0.98); }
+
+  .setup-hint{
+    margin-top:14px;
+    font-size:11.5px;
+    color:#8a8069;
+    line-height:1.5;
+  }
+
+  /* ---------- COUNTDOWN VIEW ---------- */
+  .board{
+    width:100%;
+    max-width:700px;
+    text-align:center;
+  }
+  .board-eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.22em;
+    text-transform:uppercase;
+    color:var(--brass-soft);
+    margin-bottom:10px;
+  }
+  .board-title{
+    font-size:21px;
+    font-weight:600;
+    color:var(--paper);
+    margin:0 0 26px;
+    line-height:1.4;
+    word-break:keep-word;
+  }
+
+  .dday-tag{
+    display:inline-block;
+    font-family:'JetBrains Mono', monospace;
+    font-size:13px;
+    letter-spacing:0.08em;
+    color:var(--brass-soft);
+    border:1px solid rgba(216,180,120,0.4);
+    border-radius:100px;
+    padding:4px 14px;
+    margin-bottom:22px;
+  }
+
+  .tiles-spacer{
+    height:4px;
+  }
+
+  .footer-row{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:14px;
+    margin-top:26px;
+  }
+  .link-btn{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11.5px;
+    letter-spacing:0.04em;
+    color:var(--paper);
+    background:rgba(244,238,225,0.08);
+    border:1px solid var(--line);
+    border-radius:100px;
+    padding:8px 14px;
+    cursor:pointer;
+    transition:background .15s ease, border-color .15s ease;
+  }
+  .link-btn:hover{
+    background:rgba(244,238,225,0.16);
+    border-color:rgba(244,238,225,0.3);
+  }
+  .link-btn.copied{
+    background:var(--brass);
+    color:#1c2029;
+    border-color:var(--brass);
+  }
+
+  @media (max-width:380px){
+    .board-title{ font-size:18px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="app"></div>
+
+<script>
+(function(){
+  const app = document.getElementById('app');
+  const params = new URLSearchParams(window.location.search);
+
+  function pad(n){ return String(n).padStart(2,'0'); }
+
+  function renderSetup(){
+    app.innerHTML = `
+      <div class="setup-card">
+        <div class="setup-eyebrow">D-DAY WIDGET</div>
+        <h1 class="setup-title">날짜를 입력하면<br>디데이 위젯이 만들어져요</h1>
+        <div class="field">
+          <label>제목 (예: 수능, 여행, 발표)</label>
+          <input id="in-title" type="text" placeholder="디데이" maxlength="30">
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label>날짜</label>
+            <input id="in-date" type="date">
+          </div>
+          <div class="field">
+            <label>시간</label>
+            <input id="in-time" type="time" value="00:00">
+          </div>
+        </div>
+        <button class="make-btn" id="btn-make">위젯 만들기</button>
+        <div class="setup-hint">만든 후 나오는 링크를 그대로 복사해서<br>노션 embed 블록에 붙여넣으면 이 화면 대신 카운트다운이 표시돼요.</div>
+      </div>
+    `;
+    document.getElementById('btn-make').addEventListener('click', () => {
+      const title = document.getElementById('in-title').value.trim() || '디데이';
+      const date = document.getElementById('in-date').value;
+      const time = document.getElementById('in-time').value || '00:00';
+      if(!date){
+        const dateField = document.getElementById('in-date');
+        dateField.style.borderColor = '#c0483f';
+        return;
+      }
+      const iso = `${date}T${time}:00`;
+      const newParams = new URLSearchParams();
+      newParams.set('date', iso);
+      newParams.set('title', title);
+      const shareUrl = buildBaseUrl() + '?' + newParams.toString();
+      renderCountdown(iso, title, shareUrl);
+    });
+  }
+
+  function buildBaseUrl(){
+    // srcdoc / sandboxed previews don't have a usable origin+pathname,
+    // fall back to a placeholder the user can replace with their published link.
+    try{
+      if(window.location.origin && window.location.origin !== 'null' && window.location.protocol !== 'about:'){
+        return window.location.origin + window.location.pathname;
+      }
+    }catch(e){}
+    return '(퍼블리시된 링크)';
+  }
+
+  function renderCountdown(isoDate, title, shareUrlOverride){
+    const target = new Date(isoDate);
+    const shareUrl = shareUrlOverride || window.location.href;
+
+    app.innerHTML = `
+      <div class="board">
+        <div class="board-eyebrow">D-DAY</div>
+        <h1 class="board-title">${escapeHtml(title)}</h1>
+        <div class="dday-tag" id="ddayTag">D-0</div>
+        <div class="flipdown-wrap">
+          <div class="flipdown flipdown__theme-dark" id="flipdownEl"></div>
+        </div>
+        <div class="tiles-spacer"></div>
+        <div class="footer-row">
+          <button class="link-btn" id="btn-copy">🔗 이 링크 복사 (Notion embed용)</button>
+          <button class="link-btn" id="btn-reset">↺ 다시 설정</button>
+        </div>
+      </div>
+    `;
+
+    document.getElementById('btn-reset').addEventListener('click', () => {
+      renderSetup();
+    });
+
+    document.getElementById('btn-copy').addEventListener('click', (e) => {
+      const btn = e.currentTarget;
+      const doCopyFallback = () => {
+        const ta = document.createElement('textarea');
+        ta.value = shareUrl;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try{ document.execCommand('copy'); }catch(err){}
+        document.body.removeChild(ta);
+      };
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(shareUrl).catch(doCopyFallback);
+      } else {
+        doCopyFallback();
+      }
+      btn.textContent = '✓ 복사됨';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = '🔗 이 링크 복사 (Notion embed용)';
+        btn.classList.remove('copied');
+      }, 1600);
+    });
+
+    // D-day pill (D-n / D+n / D-DAY) — updated independently of FlipDown's own animation loop
+    function updateTag(){
+      const now = new Date();
+      const diff = target.getTime() - now.getTime();
+      const isFuture = diff >= 0;
+      const days = Math.floor(Math.abs(diff) / 86400000);
+      const tag = document.getElementById('ddayTag');
+      if(!tag) return;
+      if(days === 0 && isFuture){
+        tag.textContent = 'D-DAY';
+      } else if(isFuture){
+        tag.textContent = 'D-' + days;
+      } else {
+        tag.textContent = 'D+' + days;
+      }
+    }
+    updateTag();
+    setInterval(updateTag, 1000);
+
+    // FlipDown countdown — table-tennis scoreboard style flip animation
+    const nowSec = Math.floor(Date.now() / 1000);
+    const targetSec = Math.floor(target.getTime() / 1000);
+    const flipTargetSec = targetSec > nowSec ? targetSec : nowSec; // FlipDown can't count up past a passed date
+    try{
+      new FlipDown(flipTargetSec, 'flipdownEl', {
+        theme: 'dark',
+        headings: ['일', '시간', '분', '초']
+      }).start();
+    }catch(err){
+      // FlipDown failed to load (e.g. CDN blocked) — fall back to a plain text readout
+      document.getElementById('flipdownEl').innerHTML =
+        '<div style="font-family:\'JetBrains Mono\',monospace;color:var(--paper-2);font-size:13px;">카운트다운 애니메이션을 불러오지 못했어요 (네트워크 차단 시 발생)</div>';
+    }
+  }
+
+  function escapeHtml(str){
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  // entry point
+  const dateParam = params.get('date');
+  const titleParam = params.get('title') || '디데이';
+  if(dateParam){
+    renderCountdown(dateParam, titleParam, window.location.href);
+  } else {
+    renderSetup();
+  }
+})();
+</script>
+
+</body>
+</html>
