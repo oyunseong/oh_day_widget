@@ -241,10 +241,20 @@
             padding-left:30px;
             padding-right:14px !important;
         }
-        /* 네이티브 달력/시계 아이콘은 숨기고, 박스 전체를 클릭하면 피커가 열리도록 함 */
+        /* 네이티브 달력/시계 아이콘은 투명하게 만들어 박스 전체를 뒤덮게 하고,
+           JS showPicker() 없이도 네이티브 클릭 동작만으로 피커가 열리도록 함
+           (Notion 같은 cross-origin iframe에서는 showPicker()가 Permissions-Policy로 막힘) */
         .field input[type="date"]::-webkit-calendar-picker-indicator,
         .field input[type="time"]::-webkit-calendar-picker-indicator{
-            display:none;
+            position:absolute;
+            left:0;
+            top:0;
+            width:100%;
+            height:100%;
+            margin:0;
+            padding:0;
+            opacity:0;
+            cursor:pointer;
         }
         .row2{
             display:flex;
@@ -572,15 +582,12 @@
             });
 
             // 날짜/시간은 직접 타이핑 대신 달력·시계 피커 클릭으로만 선택
+            // (showPicker()는 Notion 같은 cross-origin iframe에서 막히므로 쓰지 않고,
+            //  투명하게 확대한 네이티브 picker-indicator가 클릭을 전담하게 함)
             ['in-date', 'in-time'].forEach(id => {
                 const el = document.getElementById(id);
                 el.addEventListener('keydown', (e) => {
                     if(e.key !== 'Tab') e.preventDefault();
-                });
-                el.addEventListener('click', () => {
-                    if(typeof el.showPicker === 'function'){
-                        try{ el.showPicker(); }catch(err){}
-                    }
                 });
             });
         }
