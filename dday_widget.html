@@ -231,36 +231,40 @@
             background:#fff;
             box-shadow:0 0 0 4px rgba(185,138,74,0.14);
         }
-        .field input[type="date"],
-        .field input[type="time"]{
-            cursor:pointer;
-            caret-color:transparent;
-            font-family:'JetBrains Mono', monospace;
-            font-size:12.5px;
-            letter-spacing:0.01em;
-            padding-left:30px;
-            padding-right:14px !important;
-        }
-        /* 네이티브 달력/시계 아이콘은 투명하게 만들어 박스 전체를 뒤덮게 하고,
-           JS showPicker() 없이도 네이티브 클릭 동작만으로 피커가 열리도록 함
-           (Notion 같은 cross-origin iframe에서는 showPicker()가 Permissions-Policy로 막힘) */
-        .field input[type="date"]::-webkit-calendar-picker-indicator,
-        .field input[type="time"]::-webkit-calendar-picker-indicator{
-            position:absolute;
-            left:0;
-            top:0;
-            width:100%;
-            height:100%;
-            margin:0;
-            padding:0;
-            opacity:0;
-            cursor:pointer;
-        }
-        .row2{
+        /* 날짜/시간은 네이티브 select 드롭다운으로 선택 — 타이핑이 원천적으로 불가능하고
+           iframe(Notion 임베드 등) 정책과 무관하게 어떤 환경에서도 클릭만으로 동작함 */
+        .select-row{
             display:flex;
-            gap:10px;
+            align-items:center;
+            flex-wrap:wrap;
+            gap:6px;
         }
-        .row2 .field{flex:1; min-width:0;}
+        .sel{
+            appearance:none;
+            -webkit-appearance:none;
+            cursor:pointer;
+            border-radius:9px;
+            border:1.5px solid var(--surface-2);
+            background:rgba(0,0,0,0.015) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237d7561' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 8px center;
+            background-size:12px;
+            font-family:'JetBrains Mono', monospace;
+            font-size:13px;
+            color:var(--surface-text);
+            padding:10px 24px 10px 10px;
+            outline:none;
+            transition:border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
+        }
+        .sel:hover{ border-color:var(--brass-soft); }
+        .sel:focus{
+            border-color:var(--brass);
+            background-color:#fff;
+            box-shadow:0 0 0 4px rgba(185,138,74,0.14);
+        }
+        .sel-suffix{
+            font-size:12.5px;
+            color:var(--muted);
+            margin-right:2px;
+        }
 
         .make-btn{
             width:100%;
@@ -544,35 +548,50 @@
             <input id="in-title" type="text" placeholder="휴가" maxlength="30">
           </div>
         </div>
-        <div class="row2">
-          <div class="field">
-            <label>날짜</label>
-            <div class="input-wrap">
-              <span class="input-icon">📅</span>
-              <input id="in-date" type="date">
-            </div>
+        <div class="field">
+          <label>📅 날짜</label>
+          <div class="select-row">
+            <select id="in-year" class="sel"></select>
+            <span class="sel-suffix">년</span>
+            <select id="in-month" class="sel"></select>
+            <span class="sel-suffix">월</span>
+            <select id="in-day" class="sel"></select>
+            <span class="sel-suffix">일</span>
           </div>
-          <div class="field">
-            <label>시간</label>
-            <div class="input-wrap">
-              <span class="input-icon">🕐</span>
-              <input id="in-time" type="time" value="00:00">
-            </div>
+        </div>
+        <div class="field">
+          <label>🕐 시간</label>
+          <div class="select-row">
+            <select id="in-ampm" class="sel">
+              <option value="AM">오전</option>
+              <option value="PM">오후</option>
+            </select>
+            <select id="in-hour" class="sel"></select>
+            <span class="sel-suffix">시</span>
+            <select id="in-minute" class="sel"></select>
+            <span class="sel-suffix">분</span>
           </div>
         </div>
         <button class="make-btn" id="btn-make">위젯 만들기</button>
         <div class="setup-hint">만든 후 나오는 링크를 그대로 복사해서<br>노션 embed 블록에 붙여넣으면 이 화면 대신 카운트다운이 표시돼요.</div>
       </div>
     `;
+            setupDateTimeSelects();
+
             document.getElementById('btn-make').addEventListener('click', () => {
                 const title = document.getElementById('in-title').value.trim() || '디데이';
-                const date = document.getElementById('in-date').value;
-                const time = document.getElementById('in-time').value || '00:00';
-                if(!date){
-                    const dateField = document.getElementById('in-date');
-                    dateField.style.borderColor = '#c0483f';
-                    return;
-                }
+                const year = document.getElementById('in-year').value;
+                const month = document.getElementById('in-month').value;
+                const day = document.getElementById('in-day').value;
+                const ampm = document.getElementById('in-ampm').value;
+                const hour12 = parseInt(document.getElementById('in-hour').value, 10);
+                const minute = document.getElementById('in-minute').value;
+
+                let hour24 = hour12 % 12;
+                if(ampm === 'PM') hour24 += 12;
+
+                const date = `${year}-${month}-${day}`;
+                const time = `${String(hour24).padStart(2, '0')}:${minute}`;
                 const iso = `${date}T${time}:00`;
                 const newParams = new URLSearchParams();
                 newParams.set('date', iso);
@@ -580,16 +599,53 @@
                 const shareUrl = buildBaseUrl() + '?' + newParams.toString();
                 renderCountdown(iso, title, shareUrl);
             });
+        }
 
-            // 날짜/시간은 직접 타이핑 대신 달력·시계 피커 클릭으로만 선택
-            // (showPicker()는 Notion 같은 cross-origin iframe에서 막히므로 쓰지 않고,
-            //  투명하게 확대한 네이티브 picker-indicator가 클릭을 전담하게 함)
-            ['in-date', 'in-time'].forEach(id => {
-                const el = document.getElementById(id);
-                el.addEventListener('keydown', (e) => {
-                    if(e.key !== 'Tab') e.preventDefault();
-                });
-            });
+        // 날짜/시간은 직접 타이핑이 불가능한 select 드롭다운으로만 선택 —
+        // 네이티브 <select>는 iframe 정책과 무관하게 어떤 환경(Notion 임베드 포함)에서도 클릭만으로 동작함
+        function setupDateTimeSelects(){
+            const yearSelect = document.getElementById('in-year');
+            const monthSelect = document.getElementById('in-month');
+            const daySelect = document.getElementById('in-day');
+            const hourSelect = document.getElementById('in-hour');
+            const minuteSelect = document.getElementById('in-minute');
+
+            const fillOptions = (select, values, format) => {
+                select.innerHTML = values.map(v => `<option value="${v}">${format ? format(v) : v}</option>`).join('');
+            };
+
+            const now = new Date();
+            const pad2 = n => String(n).padStart(2, '0');
+
+            const years = [];
+            for(let y = now.getFullYear() - 2; y <= now.getFullYear() + 15; y++) years.push(y);
+            fillOptions(yearSelect, years);
+            yearSelect.value = now.getFullYear();
+
+            const months = Array.from({length: 12}, (_, i) => pad2(i + 1));
+            fillOptions(monthSelect, months);
+            monthSelect.value = pad2(now.getMonth() + 1);
+
+            function refreshDays(){
+                const y = parseInt(yearSelect.value, 10);
+                const m = parseInt(monthSelect.value, 10);
+                const daysInMonth = new Date(y, m, 0).getDate();
+                const prevDay = daySelect.value;
+                const days = Array.from({length: daysInMonth}, (_, i) => pad2(i + 1));
+                fillOptions(daySelect, days);
+                daySelect.value = days.includes(prevDay) ? prevDay : pad2(now.getDate());
+            }
+            refreshDays();
+            yearSelect.addEventListener('change', refreshDays);
+            monthSelect.addEventListener('change', refreshDays);
+
+            const hours = Array.from({length: 12}, (_, i) => i + 1);
+            fillOptions(hourSelect, hours);
+            hourSelect.value = 12;
+
+            const minutes = Array.from({length: 60}, (_, i) => pad2(i));
+            fillOptions(minuteSelect, minutes);
+            minuteSelect.value = '00';
         }
 
         function buildBaseUrl(){
