@@ -43,6 +43,10 @@
             --shadow: var(--shadow-light);
             --muted:#7d7561;
         }
+        html[data-theme="light"][data-bg="white"]{
+            --bg-1:#ffffff;
+            --bg-2:#f4f1ea;
+        }
 
         *{box-sizing:border-box;}
 
@@ -192,6 +196,7 @@
             position:relative;
             display:flex;
             align-items:center;
+            min-width:0;
         }
         .input-icon{
             position:absolute;
@@ -202,6 +207,8 @@
         }
         .field input{
             width:100%;
+            min-width:0;
+            position:relative;
             padding:12px 12px 12px 36px;
             border-radius:11px;
             border:1.5px solid var(--surface-2);
@@ -227,25 +234,23 @@
         .field input[type="date"],
         .field input[type="time"]{
             cursor:pointer;
+            caret-color:transparent;
             font-family:'JetBrains Mono', monospace;
-            font-size:13px;
-            letter-spacing:0.02em;
+            font-size:12.5px;
+            letter-spacing:0.01em;
+            padding-left:30px;
+            padding-right:14px !important;
         }
+        /* 네이티브 달력/시계 아이콘은 숨기고, 박스 전체를 클릭하면 피커가 열리도록 함 */
         .field input[type="date"]::-webkit-calendar-picker-indicator,
         .field input[type="time"]::-webkit-calendar-picker-indicator{
-            opacity:0.55;
-            cursor:pointer;
-            transition:opacity .15s ease;
-        }
-        .field input[type="date"]:hover::-webkit-calendar-picker-indicator,
-        .field input[type="time"]:hover::-webkit-calendar-picker-indicator{
-            opacity:0.9;
+            display:none;
         }
         .row2{
             display:flex;
             gap:10px;
         }
-        .row2 .field{flex:1;}
+        .row2 .field{flex:1; min-width:0;}
 
         .make-btn{
             width:100%;
@@ -315,9 +320,22 @@
             transform:translateY(-1px);
         }
         .dday-tag::after{
-            content:"⚙";
-            font-size:11px;
-            opacity:0.7;
+            content:"";
+            width:13px;
+            height:13px;
+            background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23d8b478' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 0 1 0 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 0 1 0-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.28Z'/%3E%3Cpath d='M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z'/%3E%3C/svg%3E");
+            background-size:contain;
+            background-repeat:no-repeat;
+            opacity:0.65;
+            transition:opacity .15s ease;
+        }
+        .dday-tag:hover::after{
+            opacity:1;
+            animation:gear-spin 1.6s linear infinite;
+        }
+        @keyframes gear-spin{
+            from{ transform:rotate(0deg); }
+            to{ transform:rotate(360deg); }
         }
 
         .tiles-spacer{
@@ -380,7 +398,8 @@
             padding:4px;
             margin-bottom:20px;
         }
-        .theme-seg-btn{
+        .theme-seg-btn,
+        .bg-seg-btn{
             flex:1;
             padding:9px 0;
             border:none;
@@ -394,8 +413,10 @@
             cursor:pointer;
             transition:all .15s ease;
         }
-        .theme-seg-btn:hover{ opacity:0.85; }
-        .theme-seg-btn.active{
+        .theme-seg-btn:hover,
+        .bg-seg-btn:hover{ opacity:0.85; }
+        .theme-seg-btn.active,
+        .bg-seg-btn.active{
             background:var(--brass);
             color:#1c2029;
             opacity:1;
@@ -466,10 +487,18 @@
             return themePref === 'system' ? (mql.matches ? 'dark' : 'light') : themePref;
         }
 
+        // ---------- 라이트 모드 배경색 (beige / white, localStorage에 저장) ----------
+        const BG_KEY = 'ohday-bg-pref';
+        let bgPref = localStorage.getItem(BG_KEY) || 'beige';
+
         function applyTheme(){
             document.documentElement.setAttribute('data-theme', resolveTheme());
+            document.documentElement.setAttribute('data-bg', bgPref);
             document.querySelectorAll('.theme-seg-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.pref === themePref);
+            });
+            document.querySelectorAll('.bg-seg-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.bg === bgPref);
             });
         }
         applyTheme();
@@ -481,6 +510,12 @@
         function setThemePref(pref){
             themePref = pref;
             localStorage.setItem(THEME_KEY, pref);
+            applyTheme();
+        }
+
+        function setBgPref(pref){
+            bgPref = pref;
+            localStorage.setItem(BG_KEY, pref);
             applyTheme();
         }
 
@@ -535,6 +570,19 @@
                 const shareUrl = buildBaseUrl() + '?' + newParams.toString();
                 renderCountdown(iso, title, shareUrl);
             });
+
+            // 날짜/시간은 직접 타이핑 대신 달력·시계 피커 클릭으로만 선택
+            ['in-date', 'in-time'].forEach(id => {
+                const el = document.getElementById(id);
+                el.addEventListener('keydown', (e) => {
+                    if(e.key !== 'Tab') e.preventDefault();
+                });
+                el.addEventListener('click', () => {
+                    if(typeof el.showPicker === 'function'){
+                        try{ el.showPicker(); }catch(err){}
+                    }
+                });
+            });
         }
 
         function buildBaseUrl(){
@@ -560,6 +608,11 @@
           <button class="theme-seg-btn" data-pref="light">라이트</button>
           <button class="theme-seg-btn" data-pref="dark">다크</button>
         </div>
+        <div class="popup-section-label">배경 (라이트)</div>
+        <div class="theme-seg" id="bgSeg">
+          <button class="bg-seg-btn" data-bg="beige">베이지</button>
+          <button class="bg-seg-btn" data-bg="white">화이트</button>
+        </div>
         <div class="popup-divider"></div>
         <button class="popup-btn" id="popup-copy">🔗 링크 복사 (Notion embed용)</button>
         <button class="popup-btn" id="popup-reset">↺ 다시 설정</button>
@@ -571,6 +624,9 @@
 
             overlay.querySelectorAll('.theme-seg-btn').forEach(btn => {
                 btn.addEventListener('click', () => setThemePref(btn.dataset.pref));
+            });
+            overlay.querySelectorAll('.bg-seg-btn').forEach(btn => {
+                btn.addEventListener('click', () => setBgPref(btn.dataset.bg));
             });
 
             function closePopup(){
@@ -673,7 +729,7 @@
 
         function escapeHtml(str){
             const div = document.createElement('div');
-            div.textContent = str;
+            div.textContent = str; 
             return div.innerHTML;
         }
 
